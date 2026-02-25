@@ -1,0 +1,287 @@
+{% load djicons i18n %}
+
+<div class="p-4" x-data="{
+    tab: 'fuel',
+    deleteModal: false,
+    addFuelOpen: false,
+    addTripOpen: false,
+    addMaintenanceOpen: false
+}">
+    <!-- Header with back button -->
+    <div class="flex items-center gap-4 mb-6">
+        <button class="btn btn-ghost btn-sm"
+                hx-get="{% url 'fleet:vehicles_list' %}"
+                hx-target="#main-content-area"
+                hx-push-url="true">
+            {% icon "arrow-back-outline" %}
+        </button>
+        <div class="flex-1">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    {% icon "car-sport-outline" css_class="text-2xl text-primary" %}
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold">{{ vehicle.name }}</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="badge badge-sm color-{% if vehicle.status == 'available' %}success{% elif vehicle.status == 'in_use' %}primary{% elif vehicle.status == 'maintenance' %}warning{% else %}error{% endif %}">
+                            {{ vehicle.get_status_display }}
+                        </span>
+                        {% if vehicle.plate_number %}
+                        <span class="text-sm text-base-content/60">{{ vehicle.plate_number }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Vehicle Info -->
+        <div class="lg:col-span-1">
+            <!-- Vehicle Details Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">{% icon "information-circle-outline" css_class="text-primary" %} {% trans "Vehicle Information" %}</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list">
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                {% icon "car-sport-outline" css_class="text-primary" %}
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-note">{% trans "Name" %}</div>
+                                <div class="list-item-label">{{ vehicle.name }}</div>
+                            </div>
+                        </div>
+
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                {% icon "card-outline" css_class="text-primary" %}
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-note">{% trans "Plate Number" %}</div>
+                                <div class="list-item-label">{{ vehicle.plate_number|default:"-" }}</div>
+                            </div>
+                        </div>
+
+                        {% if vehicle.make or vehicle.model %}
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                {% icon "construct-outline" css_class="text-primary" %}
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-note">{% trans "Make / Model" %}</div>
+                                <div class="list-item-label">{{ vehicle.make }} {{ vehicle.model }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if vehicle.year %}
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                {% icon "calendar-outline" css_class="text-primary" %}
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-note">{% trans "Year" %}</div>
+                                <div class="list-item-label">{{ vehicle.year }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                {% icon "speedometer-outline" css_class="text-primary" %}
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-note">{% trans "Odometer" %}</div>
+                                <div class="list-item-label">{{ vehicle.odometer|default:"0" }} km</div>
+                            </div>
+                        </div>
+
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                {% icon "flash-outline" css_class="text-primary" %}
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-note">{% trans "Fuel Type" %}</div>
+                                <div class="list-item-label">{{ vehicle.fuel_type|default:"-" }}</div>
+                            </div>
+                        </div>
+
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                {% icon "flag-outline" css_class="text-primary" %}
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-note">{% trans "Status" %}</div>
+                                <div class="list-item-label">
+                                    <span class="badge badge-sm color-{% if vehicle.status == 'available' %}success{% elif vehicle.status == 'in_use' %}primary{% elif vehicle.status == 'maintenance' %}warning{% else %}error{% endif %}">
+                                        {{ vehicle.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if vehicle.assigned_to %}
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                {% icon "person-outline" css_class="text-primary" %}
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-note">{% trans "Assigned To" %}</div>
+                                <div class="list-item-label">{{ vehicle.assigned_to }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Card -->
+            {% if vehicle.notes %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">{% icon "document-text-outline" css_class="text-primary" %} {% trans "Notes" %}</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-sm" style="white-space: pre-wrap;">{{ vehicle.notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Dates Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">{% icon "calendar-outline" css_class="text-primary" %} {% trans "Dates" %}</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list">
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                {% icon "calendar-outline" css_class="text-base-content/40" %}
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-note">{% trans "Created" %}</div>
+                                <div class="list-item-label">{{ vehicle.created_at|date:"d/m/Y" }}</div>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                {% icon "time-outline" css_class="text-base-content/40" %}
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-note">{% trans "Last updated" %}</div>
+                                <div class="list-item-label">{{ vehicle.updated_at|date:"d/m/Y H:i" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Tabs for Logs -->
+        <div class="lg:col-span-2">
+            <!-- Tab Bar -->
+            <div class="tabs tabs-border mb-4">
+                <button class="tab" :class="{ 'tab-active': tab === 'fuel' }" @click="tab = 'fuel'">
+                    {% icon "water-outline" %}
+                    <span>{% trans "Fuel Logs" %}</span>
+                </button>
+                <button class="tab" :class="{ 'tab-active': tab === 'trips' }" @click="tab = 'trips'">
+                    {% icon "navigate-outline" %}
+                    <span>{% trans "Trips" %}</span>
+                </button>
+                <button class="tab" :class="{ 'tab-active': tab === 'maintenance' }" @click="tab = 'maintenance'">
+                    {% icon "build-outline" %}
+                    <span>{% trans "Maintenance" %}</span>
+                </button>
+            </div>
+
+            <!-- Fuel Logs Tab -->
+            <div x-show="tab === 'fuel'" x-cloak>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">{% icon "water-outline" css_class="text-primary" %} {% trans "Fuel Logs" %}</h3>
+                        <button class="btn btn-sm color-primary" @click="addFuelOpen = true">
+                            {% icon "add-outline" %} {% trans "Add" %}
+                        </button>
+                    </div>
+                    <div class="card-body p-0" id="fuel-logs-container">
+                        {% include "fleet/partials/fuel_logs_list.html" %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trips Tab -->
+            <div x-show="tab === 'trips'" x-cloak>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">{% icon "navigate-outline" css_class="text-primary" %} {% trans "Trips" %}</h3>
+                        <button class="btn btn-sm color-primary" @click="addTripOpen = true">
+                            {% icon "add-outline" %} {% trans "Add" %}
+                        </button>
+                    </div>
+                    <div class="card-body p-0" id="trip-logs-container">
+                        {% include "fleet/partials/trip_logs_list.html" %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Tab -->
+            <div x-show="tab === 'maintenance'" x-cloak>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">{% icon "build-outline" css_class="text-primary" %} {% trans "Maintenance" %}</h3>
+                        <button class="btn btn-sm color-primary" @click="addMaintenanceOpen = true">
+                            {% icon "add-outline" %} {% trans "Add" %}
+                        </button>
+                    </div>
+                    <div class="card-body p-0" id="maintenance-logs-container">
+                        {% include "fleet/partials/maintenance_logs_list.html" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Fuel Log Side Sheet -->
+    <div class="sheet-backdrop" :class="{ 'is-open': addFuelOpen }" @click.self="addFuelOpen = false">
+        <div class="side-sheet side-sheet-right">
+            {% include "fleet/partials/panel_fuel_log_add.html" %}
+        </div>
+    </div>
+
+    <!-- Add Trip Log Side Sheet -->
+    <div class="sheet-backdrop" :class="{ 'is-open': addTripOpen }" @click.self="addTripOpen = false">
+        <div class="side-sheet side-sheet-right">
+            {% include "fleet/partials/panel_trip_log_add.html" %}
+        </div>
+    </div>
+
+    <!-- Add Maintenance Log Side Sheet -->
+    <div class="sheet-backdrop" :class="{ 'is-open': addMaintenanceOpen }" @click.self="addMaintenanceOpen = false">
+        <div class="side-sheet side-sheet-right">
+            {% include "fleet/partials/panel_maintenance_log_add.html" %}
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-backdrop" :data-state="deleteModal ? 'open' : 'closed'" @click.self="deleteModal = false">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">{% trans "Confirm Delete" %}</h3>
+                <button class="modal-close" @click="deleteModal = false">{% icon "close-outline" %}</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-base-content/70">
+                    {% trans "Are you sure you want to delete this entry?" %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost btn-sm" @click="deleteModal = false">{% trans "Cancel" %}</button>
+                <button class="btn btn-sm color-error" @click="deleteModal = false">{% icon "trash-outline" %} {% trans "Delete" %}</button>
+            </div>
+        </div>
+    </div>
+</div>

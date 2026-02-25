@@ -1,0 +1,63 @@
+{% load djicons i18n %}
+
+<div class="side-sheet-header">
+    <h3 class="sheet-title">{% trans "Add Fuel Log" %}</h3>
+    <button class="sheet-close" @click="addFuelOpen = false">{% icon "close-outline" %}</button>
+</div>
+
+<div class="side-sheet-content">
+    <form id="add-fuel-log-form"
+          hx-post="{% url 'fleet:fuel_log_add' vehicle.id %}"
+          hx-target="#fuel-logs-container"
+          hx-swap="innerHTML"
+          @htmx:after-request="addFuelOpen = false"
+          class="flex flex-col gap-4 p-6">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Date" %}</label>
+            <input type="date" name="date" class="input input-sm w-full" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Liters" %}</label>
+            <input type="number" name="liters" class="input input-sm w-full" step="0.01" min="0" placeholder="0.00" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Cost" %}</label>
+            <input type="number" name="cost" class="input input-sm w-full" step="0.01" min="0" placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Odometer Reading" %}</label>
+            <input type="number" name="odometer" class="input input-sm w-full" min="0" placeholder="0" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label flex items-center gap-2">
+                <input type="checkbox" name="full_tank" class="toggle" checked>
+                {% trans "Full Tank" %}
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Station" %}</label>
+            <input type="text" name="station" class="input input-sm w-full" placeholder="{% trans 'Station name' %}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Notes" %}</label>
+            <textarea name="notes" class="textarea textarea-sm w-full" rows="3"></textarea>
+        </div>
+    </form>
+</div>
+
+<div class="side-sheet-footer">
+    <div class="flex justify-end gap-2">
+        <button type="button" class="btn btn-ghost btn-sm" @click="addFuelOpen = false">{% trans "Cancel" %}</button>
+        <button type="submit" form="add-fuel-log-form" class="btn btn-sm color-primary">
+            {% icon "add-outline" %} {% trans "Add" %}
+        </button>
+    </div>
+</div>

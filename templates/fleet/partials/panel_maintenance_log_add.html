@@ -1,0 +1,75 @@
+{% load djicons i18n %}
+
+<div class="side-sheet-header">
+    <h3 class="sheet-title">{% trans "Add Maintenance Log" %}</h3>
+    <button class="sheet-close" @click="addMaintenanceOpen = false">{% icon "close-outline" %}</button>
+</div>
+
+<div class="side-sheet-content">
+    <form id="add-maintenance-log-form"
+          hx-post="{% url 'fleet:maintenance_log_add' vehicle.id %}"
+          hx-target="#maintenance-logs-container"
+          hx-swap="innerHTML"
+          @htmx:after-request="addMaintenanceOpen = false"
+          class="flex flex-col gap-4 p-6">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Date" %}</label>
+            <input type="date" name="date" class="input input-sm w-full" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Type" %}</label>
+            <select name="maintenance_type" class="select select-sm w-full">
+                <option value="corrective">{% trans "Corrective" %}</option>
+                <option value="preventive">{% trans "Preventive" %}</option>
+                <option value="inspection">{% trans "Inspection / ITV" %}</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Description" %}</label>
+            <textarea name="description" class="textarea textarea-sm w-full" rows="3" required placeholder="{% trans 'Describe the maintenance work' %}"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Cost" %}</label>
+            <input type="number" name="cost" class="input input-sm w-full" step="0.01" min="0" placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Odometer Reading" %}</label>
+            <input type="number" name="odometer" class="input input-sm w-full" min="0" placeholder="0">
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Workshop / Mechanic" %}</label>
+            <input type="text" name="performed_by" class="input input-sm w-full" placeholder="{% trans 'Who performed the work' %}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Next Maintenance" %}</label>
+            <input type="date" name="next_maintenance" class="input input-sm w-full">
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Next at Odometer" %}</label>
+            <input type="number" name="next_odometer" class="input input-sm w-full" min="0" placeholder="0">
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Notes" %}</label>
+            <textarea name="notes" class="textarea textarea-sm w-full" rows="3"></textarea>
+        </div>
+    </form>
+</div>
+
+<div class="side-sheet-footer">
+    <div class="flex justify-end gap-2">
+        <button type="button" class="btn btn-ghost btn-sm" @click="addMaintenanceOpen = false">{% trans "Cancel" %}</button>
+        <button type="submit" form="add-maintenance-log-form" class="btn btn-sm color-primary">
+            {% icon "add-outline" %} {% trans "Add" %}
+        </button>
+    </div>
+</div>

@@ -1,0 +1,41 @@
+{% load djicons i18n %}
+
+{% if trip_logs %}
+<div class="list">
+    {% for log in trip_logs %}
+    <div class="list-item">
+        <div class="list-item-start">
+            <div class="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
+                {% icon "navigate-outline" css_class="text-xl text-success" %}
+            </div>
+        </div>
+        <div class="list-item-content">
+            <div class="list-item-label">
+                {{ log.origin }} &rarr; {{ log.destination }}
+            </div>
+            <div class="list-item-note">
+                {{ log.date|date:"d/m/Y" }}
+                {% if log.distance_km %} &middot; {{ log.distance_km }} km{% endif %}
+                {% if log.driver_name %} &middot; {{ log.driver_name }}{% endif %}
+                {% if log.purpose %} &middot; {{ log.purpose }}{% endif %}
+            </div>
+        </div>
+        <div class="list-item-end">
+            <button class="btn btn-ghost btn-sm color-error"
+                    hx-post="{% url 'fleet:trip_log_delete' vehicle.id log.id %}"
+                    hx-target="#trip-logs-container"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    hx-confirm="{% trans 'Delete this trip log?' %}"
+                    title="{% trans 'Delete' %}">
+                {% icon "trash-outline" %}
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-12 text-base-content/40">
+    {% icon "navigate-outline" css_class="text-5xl block mx-auto mb-2" %}
+    <p class="mt-2">{% trans "No trips recorded" %}</p>
+</div>
+{% endif %}

@@ -60,7 +60,10 @@
                     </label>
                 </td>
                 <td class="datatable-td">
-                    <span class="font-medium cursor-pointer" @click="openPanel('{% url 'fleet:vehicle_edit' item.id %}')">{{ item.name }}</span>
+                    <span class="font-medium cursor-pointer text-primary"
+                          hx-get="{% url 'fleet:vehicle_detail' item.id %}"
+                          hx-target="#main-content-area"
+                          hx-push-url="true">{{ item.name }}</span>
                 </td>
                 <td class="datatable-td">
                     <span class="badge badge-sm">{{ item.status }}</span>

@@ -1,0 +1,45 @@
+{% load djicons i18n %}
+
+{% if maintenance_logs %}
+<div class="list">
+    {% for log in maintenance_logs %}
+    <div class="list-item">
+        <div class="list-item-start">
+            <div class="w-10 h-10 bg-warning/10 rounded-lg flex items-center justify-center">
+                {% icon "build-outline" css_class="text-xl text-warning" %}
+            </div>
+        </div>
+        <div class="list-item-content">
+            <div class="list-item-label">
+                <span class="badge badge-sm color-{% if log.maintenance_type == 'preventive' %}success{% elif log.maintenance_type == 'corrective' %}error{% else %}primary{% endif %} mr-2">
+                    {{ log.get_maintenance_type_display }}
+                </span>
+                {{ log.description|truncatewords:10 }}
+            </div>
+            <div class="list-item-note">
+                {{ log.date|date:"d/m/Y" }}
+                {% if log.cost %} &middot; {{ log.cost }} &euro;{% endif %}
+                {% if log.performed_by %} &middot; {{ log.performed_by }}{% endif %}
+                {% if log.odometer %} &middot; {{ log.odometer }} km{% endif %}
+                {% if log.next_maintenance %} &middot; {% trans "Next" %}: {{ log.next_maintenance|date:"d/m/Y" }}{% endif %}
+            </div>
+        </div>
+        <div class="list-item-end">
+            <button class="btn btn-ghost btn-sm color-error"
+                    hx-post="{% url 'fleet:maintenance_log_delete' vehicle.id log.id %}"
+                    hx-target="#maintenance-logs-container"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    hx-confirm="{% trans 'Delete this maintenance log?' %}"
+                    title="{% trans 'Delete' %}">
+                {% icon "trash-outline" %}
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-12 text-base-content/40">
+    {% icon "build-outline" css_class="text-5xl block mx-auto mb-2" %}
+    <p class="mt-2">{% trans "No maintenance logs recorded" %}</p>
+</div>
+{% endif %}

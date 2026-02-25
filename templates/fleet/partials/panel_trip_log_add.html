@@ -1,0 +1,61 @@
+{% load djicons i18n %}
+
+<div class="side-sheet-header">
+    <h3 class="sheet-title">{% trans "Add Trip" %}</h3>
+    <button class="sheet-close" @click="addTripOpen = false">{% icon "close-outline" %}</button>
+</div>
+
+<div class="side-sheet-content">
+    <form id="add-trip-log-form"
+          hx-post="{% url 'fleet:trip_log_add' vehicle.id %}"
+          hx-target="#trip-logs-container"
+          hx-swap="innerHTML"
+          @htmx:after-request="addTripOpen = false"
+          class="flex flex-col gap-4 p-6">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Date" %}</label>
+            <input type="date" name="date" class="input input-sm w-full" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Origin" %}</label>
+            <input type="text" name="origin" class="input input-sm w-full" placeholder="{% trans 'Origin' %}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Destination" %}</label>
+            <input type="text" name="destination" class="input input-sm w-full" placeholder="{% trans 'Destination' %}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Distance (km)" %}</label>
+            <input type="number" name="distance_km" class="input input-sm w-full" step="0.1" min="0" placeholder="0.0">
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Driver" %}</label>
+            <input type="text" name="driver_name" class="input input-sm w-full" placeholder="{% trans 'Driver name' %}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Purpose" %}</label>
+            <input type="text" name="purpose" class="input input-sm w-full" placeholder="{% trans 'Purpose of trip' %}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-group-label">{% trans "Notes" %}</label>
+            <textarea name="notes" class="textarea textarea-sm w-full" rows="3"></textarea>
+        </div>
+    </form>
+</div>
+
+<div class="side-sheet-footer">
+    <div class="flex justify-end gap-2">
+        <button type="button" class="btn btn-ghost btn-sm" @click="addTripOpen = false">{% trans "Cancel" %}</button>
+        <button type="submit" form="add-trip-log-form" class="btn btn-sm color-primary">
+            {% icon "add-outline" %} {% trans "Add" %}
+        </button>
+    </div>
+</div>

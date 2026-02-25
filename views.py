@@ -13,7 +13,7 @@ from apps.core.htmx import htmx_view
 from apps.core.services import export_to_csv, export_to_excel
 from apps.modules_runtime.navigation import with_module_nav
 
-from .models import Vehicle
+from .models import Vehicle, FuelLog, TripLog, VehicleMaintenanceLog
 
 PER_PAGE_CHOICES = [10, 25, 50, 100]
 
@@ -180,6 +180,138 @@ def vehicles_bulk_action(request):
     if action == 'delete':
         qs.update(is_deleted=True, deleted_at=timezone.now())
     return _render_vehicles_list(request, hub_id)
+
+
+@login_required
+@with_module_nav('fleet', 'vehicles')
+@htmx_view('fleet/pages/vehicle_detail.html', 'fleet/partials/vehicle_detail_content.html')
+def vehicle_detail(request, pk):
+    hub_id = request.session.get('hub_id')
+    vehicle = get_object_or_404(Vehicle, pk=pk, hub_id=hub_id, is_deleted=False)
+    return {
+        'vehicle': vehicle,
+        'fuel_logs': vehicle.fuel_logs.filter(is_deleted=False)[:20],
+        'trip_logs': vehicle.trip_logs.filter(is_deleted=False)[:20],
+        'maintenance_logs': vehicle.maintenance_logs.filter(is_deleted=False)[:20],
+    }
+
+
+# ======================================================================
+# Fuel Logs
+# ======================================================================
+
+def _render_fuel_logs(request, vehicle):
+    fuel_logs = vehicle.fuel_logs.filter(is_deleted=False)[:20]
+    return django_render(request, 'fleet/partials/fuel_logs_list.html', {
+        'vehicle': vehicle, 'fuel_logs': fuel_logs,
+    })
+
+@login_required
+@require_POST
+def fuel_log_add(request, pk):
+    hub_id = request.session.get('hub_id')
+    vehicle = get_object_or_404(Vehicle, pk=pk, hub_id=hub_id, is_deleted=False)
+    obj = FuelLog(hub_id=hub_id, vehicle=vehicle)
+    obj.date = request.POST.get('date', '')
+    obj.liters = request.POST.get('liters', 0) or 0
+    obj.cost = request.POST.get('cost', 0) or 0
+    obj.odometer = int(request.POST.get('odometer', 0) or 0)
+    obj.full_tank = request.POST.get('full_tank') == 'on'
+    obj.station = request.POST.get('station', '').strip()
+    obj.notes = request.POST.get('notes', '').strip()
+    obj.save()
+    return _render_fuel_logs(request, vehicle)
+
+@login_required
+@require_POST
+def fuel_log_delete(request, pk, log_pk):
+    hub_id = request.session.get('hub_id')
+    vehicle = get_object_or_404(Vehicle, pk=pk, hub_id=hub_id, is_deleted=False)
+    obj = get_object_or_404(FuelLog, pk=log_pk, vehicle=vehicle, is_deleted=False)
+    obj.is_deleted = True
+    obj.deleted_at = timezone.now()
+    obj.save(update_fields=['is_deleted', 'deleted_at', 'updated_at'])
+    return _render_fuel_logs(request, vehicle)
+
+
+# ======================================================================
+# Trip Logs
+# ======================================================================
+
+def _render_trip_logs(request, vehicle):
+    trip_logs = vehicle.trip_logs.filter(is_deleted=False)[:20]
+    return django_render(request, 'fleet/partials/trip_logs_list.html', {
+        'vehicle': vehicle, 'trip_logs': trip_logs,
+    })
+
+@login_required
+@require_POST
+def trip_log_add(request, pk):
+    hub_id = request.session.get('hub_id')
+    vehicle = get_object_or_404(Vehicle, pk=pk, hub_id=hub_id, is_deleted=False)
+    obj = TripLog(hub_id=hub_id, vehicle=vehicle)
+    obj.date = request.POST.get('date', '')
+    obj.origin = request.POST.get('origin', '').strip()
+    obj.destination = request.POST.get('destination', '').strip()
+    obj.distance_km = request.POST.get('distance_km', 0) or 0
+    obj.driver_name = request.POST.get('driver_name', '').strip()
+    obj.purpose = request.POST.get('purpose', '').strip()
+    obj.notes = request.POST.get('notes', '').strip()
+    obj.save()
+    return _render_trip_logs(request, vehicle)
+
+@login_required
+@require_POST
+def trip_log_delete(request, pk, log_pk):
+    hub_id = request.session.get('hub_id')
+    vehicle = get_object_or_404(Vehicle, pk=pk, hub_id=hub_id, is_deleted=False)
+    obj = get_object_or_404(TripLog, pk=log_pk, vehicle=vehicle, is_deleted=False)
+    obj.is_deleted = True
+    obj.deleted_at = timezone.now()
+    obj.save(update_fields=['is_deleted', 'deleted_at', 'updated_at'])
+    return _render_trip_logs(request, vehicle)
+
+
+# ======================================================================
+# Maintenance Logs
+# ======================================================================
+
+def _render_maintenance_logs(request, vehicle):
+    maintenance_logs = vehicle.maintenance_logs.filter(is_deleted=False)[:20]
+    return django_render(request, 'fleet/partials/maintenance_logs_list.html', {
+        'vehicle': vehicle, 'maintenance_logs': maintenance_logs,
+    })
+
+@login_required
+@require_POST
+def maintenance_log_add(request, pk):
+    hub_id = request.session.get('hub_id')
+    vehicle = get_object_or_404(Vehicle, pk=pk, hub_id=hub_id, is_deleted=False)
+    obj = VehicleMaintenanceLog(hub_id=hub_id, vehicle=vehicle)
+    obj.date = request.POST.get('date', '')
+    obj.maintenance_type = request.POST.get('maintenance_type', 'corrective')
+    obj.description = request.POST.get('description', '').strip()
+    obj.cost = request.POST.get('cost', 0) or 0
+    obj.odometer = int(request.POST.get('odometer', 0) or 0) or None
+    obj.performed_by = request.POST.get('performed_by', '').strip()
+    next_maint = request.POST.get('next_maintenance', '').strip()
+    obj.next_maintenance = next_maint if next_maint else None
+    next_odo = request.POST.get('next_odometer', '').strip()
+    obj.next_odometer = int(next_odo) if next_odo else None
+    obj.notes = request.POST.get('notes', '').strip()
+    obj.save()
+    return _render_maintenance_logs(request, vehicle)
+
+@login_required
+@require_POST
+def maintenance_log_delete(request, pk, log_pk):
+    hub_id = request.session.get('hub_id')
+    vehicle = get_object_or_404(Vehicle, pk=pk, hub_id=hub_id, is_deleted=False)
+    obj = get_object_or_404(VehicleMaintenanceLog, pk=log_pk, vehicle=vehicle, is_deleted=False)
+    obj.is_deleted = True
+    obj.deleted_at = timezone.now()
+    obj.save(update_fields=['is_deleted', 'deleted_at', 'updated_at'])
+    return _render_maintenance_logs(request, vehicle)
 
 
 @login_required
